@@ -1,16 +1,23 @@
 from django.contrib import admin
 from django.urls import path, include
+from core import views  # Adjust the import path based on the actual location of views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views import defaults as default_views
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import JavaScriptCatalog
+from django.urls import path
 
 admin.site.site_header = "SkyLearn Admin"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
+     path("", include("django.contrib.auth.urls")),  # Add this line
+#     path("signup/", views.signup_choice, name="signup_choice"),
+    path('students/', views.student_list, name='student_list'),
+    path('lecturers/', views.lecturer_list, name='lecturer_list'),
+
 ]
 
 urlpatterns += i18n_patterns(

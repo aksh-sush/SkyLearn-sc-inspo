@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import HttpResponse, JsonResponse
@@ -9,6 +9,9 @@ from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django_filters.views import FilterView
 from xhtml2pdf import pisa
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from .models import CustomUser
 
 from accounts.decorators import admin_required
 from accounts.filters import LecturerFilter, StudentFilter
@@ -19,7 +22,7 @@ from accounts.forms import (
     StaffAddForm,
     StudentAddForm,
 )
-from accounts.models import Parent, Student, User
+from accounts.models import Parent, Student, customUser
 from core.models import Semester, Session
 from course.models import Course
 from result.models import TakenCourse
@@ -27,7 +30,116 @@ from result.models import TakenCourse
 # ########################################################
 # Utility Functions
 # ########################################################
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
 
+def signup_choice(request):
+   return render(request, "accounts/signup_choice.html")
+
+# accounts/views.py
+
+
+
+
+# core/views.py or users/views.py
+
+def student_signup(request):
+    if request.method == 'POST':
+        form = StudentAddForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_student = True
+            user.save()
+
+            messages.success(request, 'Account created successfully. Please login.')
+            return redirect('login')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+            print("Form errors:", form.errors)
+    else:
+        form = StudentAddForm()
+    return render(request, 'accounts/student_signup.htm', {'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        role = request.POST.get('role')
+
+        if not username or not password or not role:
+            messages.error(request, "Please fill in all fields.")
+            return render(request, 'registration/login.html')
+
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            if user.is_active:
+                # Verify the selected role matches the user's actual role
+                if role == 'student' and user.is_student:
+                    login(request, user)
+                    messages.success(request, f"Welcome back, {user.get_full_name}! You have successfully signed in as a student.")
+                    return redirect('role_redirect')
+                elif role == 'lecturer' and user.is_lecturer:
+                    login(request, user)
+                    messages.success(request, f"Welcome back, {user.get_full_name}! You have successfully signed in as a lecturer.")
+                    return redirect('role_redirect')
+                elif role == 'admin' and user.is_superuser:
+                    login(request, user)
+                    messages.success(request, f"Welcome back, {user.get_full_name}! You have successfully signed in as an administrator.")
+                    return redirect('role_redirect')
+                else:
+                    messages.error(request, f"Selected role '{role}' does not match your account type.")
+            else:
+                messages.error(request, "Your account is inactive. Please contact the administrator.")
+        else:
+            messages.error(request, "Invalid username or password. Please try again.")
+    
+    return render(request, 'registration/login.html')
+
+def lecturer_signup(request):
+    if request.method == 'POST':
+        # handle form submission
+        ...
+        return render(request, 'accounts/lecturer_signup.html')  # This assumes your template is under core/templates/core
+
+
+def signup_view(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("login")  # or wherever you want
+    else:
+        form = UserCreationForm()
+    return render(request, "signup.html", {"form": form})
+
+
+@login_required
+def student_dashboard(request):
+    # You can fetch context data like students if needed
+    return render(request, "dashboard/student.html", {"title": "Student Dashboard"})
+
+@login_required
+def lecturer_dashboard(request):
+    return render(request, "dashboard/lecturer.html", {"title": "Lecturer Dashboard"})
+
+@login_required
+def admin_dashboard(request):
+    return render(request, "dashboard/admin.html", {"title": "Admin Dashboard"})
+
+
+@login_required
+def role_redirect_view(request):
+    user = request.user
+    if user.is_superuser:
+        return redirect('admin_dashboard')
+    elif user.is_lecturer:
+        return redirect('lecturer_dashboard')
+    elif user.is_student:
+        return redirect('student_dashboard')
+    else:
+        messages.error(request, "No valid role found for your account.")
+        return redirect('login')
 
 def render_to_pdf(template_name, context):
     """Render a given template to PDF format."""
@@ -43,6 +155,15 @@ def render_to_pdf(template_name, context):
 # ########################################################
 # Authentication and Registration
 # ########################################################
+def student_list(request):
+    students = Student.objects.all()
+    student_filter = StudentFilter(request.GET, queryset=students)
+    return render(request, 'student_list.html', {'filter': student_filter})
+
+def lecturer_list(request):
+    lecturers = Lecturer.objects.all()
+    lecturer_filter = LecturerFilter(request.GET, queryset=lecturers)
+    return render(request, 'lecturer_list.html', {'filter': lecturer_filter})
 
 
 def validate_username(request):

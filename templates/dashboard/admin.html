@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Welcome, {{ user.get_full_name }}</h2>
+            <p>You are logged in as an administrator.</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Users</h5>
+                            <p class="card-text">Manage students, lecturers, and staff.</p>
+                            <a href="{% url 'student_list' %}" class="btn btn-primary">Students</a>
+                            <a href="{% url 'lecturer_list' %}" class="btn btn-primary">Lecturers</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Courses</h5>
+                            <p class="card-text">Manage courses and programs.</p>
+                            <a href="{% url 'course_list' %}" class="btn btn-primary">Courses</a>
+                            <a href="{% url 'program_list' %}" class="btn btn-primary">Programs</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">System Settings</h5>
+                            <p class="card-text">Manage system settings and configurations.</p>
+                            <a href="{% url 'admin_panel' %}" class="btn btn-primary">Settings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

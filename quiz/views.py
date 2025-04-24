@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.shortcuts import render
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -30,10 +31,30 @@ from .models import (
     Sitting,
 )
 
+from quiz import views as quiz_views
+from core import views as core_views
+
+
 
 # ########################################################
 # Quiz Views
 # ########################################################
+
+def signup_choice(request):
+    return render(request, 'accounts/signup_choice.html')  # adjust template path if needed
+    
+@login_required
+def student_dashboard(request):
+    # You can fetch context data like students if needed
+    return render(request, "dashboard/student.html", {"title": "Student Dashboard"})
+
+@login_required
+def lecturer_dashboard(request):
+    return render(request, "dashboard/lecturer.html", {"title": "Lecturer Dashboard"})
+
+@login_required
+def admin_dashboard(request):
+    return render(request, "dashboard/admin.html", {"title": "Admin Dashboard"})
 
 
 @method_decorator([login_required, lecturer_required], name="dispatch")

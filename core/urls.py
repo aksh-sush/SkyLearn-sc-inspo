@@ -1,4 +1,9 @@
 from django.urls import path
+from . import views
+
+from django.contrib import admin
+from django.urls import path, include
+from django.shortcuts import render
 
 from .views import (
     home_view,
@@ -19,6 +24,8 @@ from .views import (
 
 urlpatterns = [
     # Accounts url
+
+
     path("", home_view, name="home"),
     path("add_item/", post_add, name="add_item"),
     path("item/<int:pk>/edit/", edit_post, name="edit_post"),

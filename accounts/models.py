@@ -6,8 +6,8 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from PIL import Image
 
-from course.models import Program
 from .validators import ASCIIUsernameValidator
+
 
 
 # LEVEL_COURSE = "Level course"
@@ -37,146 +37,54 @@ RELATION_SHIP = (
     (GRAND_FATHER, _("Grand father")),
     (OTHER, _("Other")),
 )
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import User, Student, Program
+class CustomUser(AbstractUser):
+    # Add custom fields here, if needed
+    pass
+class SignupForm(UserCreationForm):
+    # Custom fields for the User model
+    gender = forms.ChoiceField(choices=User.GENDERS, required=True)
+    phone = forms.CharField(max_length=60, required=False)
+    address = forms.CharField(max_length=60, required=False)
+    picture = forms.ImageField(required=False)
+    
+    # Custom fields for the Student model
+    level = forms.ChoiceField(choices=Student.LEVEL, required=False)
+    program = forms.ModelChoiceField(queryset=Program.objects.all(), required=False)
 
-
-class CustomUserManager(UserManager):
-    def search(self, query=None):
-        queryset = self.get_queryset()
-        if query is not None:
-            or_lookup = (
-                Q(username__icontains=query)
-                | Q(first_name__icontains=query)
-                | Q(last_name__icontains=query)
-                | Q(email__icontains=query)
-            )
-            queryset = queryset.filter(
-                or_lookup
-            ).distinct()  # distinct() is often necessary with Q lookups
-        return queryset
-
-    def get_student_count(self):
-        return self.model.objects.filter(is_student=True).count()
-
-    def get_lecturer_count(self):
-        return self.model.objects.filter(is_lecturer=True).count()
-
-    def get_superuser_count(self):
-        return self.model.objects.filter(is_superuser=True).count()
-
-
-GENDERS = ((_("M"), _("Male")), (_("F"), _("Female")))
-
-
-class User(AbstractUser):
-    is_student = models.BooleanField(default=False)
-    is_lecturer = models.BooleanField(default=False)
-    is_parent = models.BooleanField(default=False)
-    is_dep_head = models.BooleanField(default=False)
-    gender = models.CharField(max_length=1, choices=GENDERS, blank=True, null=True)
-    phone = models.CharField(max_length=60, blank=True, null=True)
-    address = models.CharField(max_length=60, blank=True, null=True)
-    picture = models.ImageField(
-        upload_to="profile_pictures/%y/%m/%d/", default="default.png", null=True
-    )
-    email = models.EmailField(blank=True, null=True)
-
-    username_validator = ASCIIUsernameValidator()
-
-    objects = CustomUserManager()
+    # Determine whether the user is a student or lecturer during signup
+    is_student = forms.BooleanField(required=False, initial=False)
+    is_lecturer = forms.BooleanField(required=False, initial=False)
 
     class Meta:
-        ordering = ("-date_joined",)
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone', 'address', 'gender', 'picture', 'is_student', 'is_lecturer', 'level', 'program', 'password1', 'password2']
 
-    @property
-    def get_full_name(self):
-        full_name = self.username
-        if self.first_name and self.last_name:
-            full_name = self.first_name + " " + self.last_name
-        return full_name
+    def save(self, commit=True):
+        # Save user instance
+        user = super().save(commit=False)
+        
+        # If you want to make sure the user is a student or lecturer
+        if self.cleaned_data['is_student']:
+            user.is_student = True
+        if self.cleaned_data['is_lecturer']:
+            user.is_lecturer = True
 
-    def __str__(self):
-        return "{} ({})".format(self.username, self.get_full_name)
+        if commit:
+            user.save()
 
-    @property
-    def get_user_role(self):
-        if self.is_superuser:
-            role = _("Admin")
-        elif self.is_student:
-            role = _("Student")
-        elif self.is_lecturer:
-            role = _("Lecturer")
-        elif self.is_parent:
-            role = _("Parent")
+            # Now handle the Student model, if the user is a student
+            if user.is_student:
+                student = Student.objects.create(
+                    student=user,
+                    level=self.cleaned_data['level'],
+                    program=self.cleaned_data['program']
+                )
 
-        return role
-
-    def get_picture(self):
-        try:
-            return self.picture.url
-        except:
-            no_picture = settings.MEDIA_URL + "default.png"
-            return no_picture
-
-    def get_absolute_url(self):
-        return reverse("profile_single", kwargs={"user_id": self.id})
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        try:
-            img = Image.open(self.picture.path)
-            if img.height > 300 or img.width > 300:
-                output_size = (300, 300)
-                img.thumbnail(output_size)
-                img.save(self.picture.path)
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        if self.picture.url != settings.MEDIA_URL + "default.png":
-            self.picture.delete()
-        super().delete(*args, **kwargs)
-
-
-class StudentManager(models.Manager):
-    def search(self, query=None):
-        qs = self.get_queryset()
-        if query is not None:
-            or_lookup = Q(level__icontains=query) | Q(program__icontains=query)
-            qs = qs.filter(
-                or_lookup
-            ).distinct()  # distinct() is often necessary with Q lookups
-        return qs
-
-
-class Student(models.Model):
-    student = models.OneToOneField(User, on_delete=models.CASCADE)
-    # id_number = models.CharField(max_length=20, unique=True, blank=True)
-    level = models.CharField(max_length=25, choices=LEVEL, null=True)
-    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True)
-
-    objects = StudentManager()
-
-    class Meta:
-        ordering = ("-student__date_joined",)
-
-    def __str__(self):
-        return self.student.get_full_name
-
-    @classmethod
-    def get_gender_count(cls):
-        males_count = Student.objects.filter(student__gender="M").count()
-        females_count = Student.objects.filter(student__gender="F").count()
-
-        return {"M": males_count, "F": females_count}
-
-    def get_absolute_url(self):
-        return reverse("profile_single", kwargs={"user_id": self.id})
-
-    def delete(self, *args, **kwargs):
-        self.student.delete()
-        super().delete(*args, **kwargs)
-
-
+        return user
+ 
 class Parent(models.Model):
     """
     Connect student with their parent, parents can
@@ -203,10 +111,13 @@ class Parent(models.Model):
 
 class DepartmentHead(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    department = models.ForeignKey(Program, on_delete=models.CASCADE, null=True)
+    # department = models.ForeignKey('course.Program', on_delete=models.CASCADE, null=True)
 
     class Meta:
         ordering = ("-user__date_joined",)
 
     def __str__(self):
         return "{}".format(self.user)
+class User(AbstractUser):
+    # Add custom fields if needed
+    pass

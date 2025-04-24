@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
+
+
 from accounts.decorators import admin_required, lecturer_required
 from accounts.models import User, Student
 from .forms import SessionForm, SemesterForm, NewsAndEventsForm
@@ -11,6 +13,31 @@ from .models import NewsAndEvents, ActivityLog, Session, Semester
 # ########################################################
 # News & Events
 # ########################################################
+# core/views.py
+
+@login_required
+@lecturer_required
+def student_list(request):
+    """Show list of all students"""
+    students = Student.objects.all()  # Adjust according to your model
+    return render(request, "core/student_list.html", {"students": students})
+
+@login_required
+@admin_required  # You can adjust this to use another decorator based on your requirements
+def lecturer_list(request):
+    """Show list of all lecturers"""
+    lecturers = User.objects.filter(is_lecturer=True)  # Assuming 'is_lecturer' is a field in your User model
+    return render(request, "core/lecturer_list.html", {"lecturers": lecturers})
+
+# Your quiz_list view definition
+@login_required
+def quiz_list(request, slug):
+    # Logic to fetch quizzes based on the slug
+    quizzes = Quiz.objects.filter(slug=slug)  # Example, adjust for your model
+    return render(request, "core/quiz_list.html", {"quizzes": quizzes})
+
+    
+    
 @login_required
 def home_view(request):
     items = NewsAndEvents.objects.all().order_by("-updated_date")

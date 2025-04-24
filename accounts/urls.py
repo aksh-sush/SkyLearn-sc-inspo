@@ -1,4 +1,6 @@
 from django.urls import path, include
+from . import views
+
 
 # from django.contrib.auth.views import (
 #     PasswordResetView,
@@ -34,7 +36,15 @@ from .views import (
 
 
 urlpatterns = [
+    path('signup/choice/', views.signup_choice, name='signup_choice'),
+    path("signup/", views.signup_view, name="signup"),
+    path('signup/student/', views.student_signup, name='student_signup'),
+    path('signup/lecturer/', views.lecturer_signup, name='lecturer_signup'),
     path("", include("django.contrib.auth.urls")),
+    path("role-redirect/", views.role_redirect_view, name="role_redirect"),
+    path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
+    path("lecturer-dashboard/", views.lecturer_dashboard, name="lecturer_dashboard"),
+    path("student-dashboard/", views.student_dashboard, name="student_dashboard"),
     path("admin_panel/", admin_panel, name="admin_panel"),
     path("profile/", profile, name="profile"),
     path("profile/<int:user_id>/detail/", profile_single, name="profile_single"),

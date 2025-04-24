@@ -4,6 +4,18 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
+{% if messages %}
+<div class="col-md-4 mx-auto mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="col-md-4 mx-auto mt-5">
   <div class="card">
     <div class="form-title">
@@ -11,21 +23,30 @@
       {% trans 'Sign in' %}
     </div>
     <div class="card-body">
-        <form action="" method="POST" id="login-form">{% csrf_token %}
+        <form method="POST" id="login-form">
+          {% csrf_token %}
           <div class="form-group mb-3">
               <label class="mb-2" for="username_id"><i class="fas fa-address-card me-2"></i>{% trans 'ID Number' %}</label>
               <input type="text" name="username" id="username_id" class="form-control" required>
-              <div id="message-wrapper"></div>
           </div>
           <div class="form-group mb-3">
               <label class="mb-2" for="password_id"><i class="fas fa-key me-2"></i>{% trans 'Password' %}</label>
               <input type="password" name="password" id="password_id" class="form-control" required>
           </div>
-          {% if form.errors %}
-                <span class="text-danger"><i class="fas fa-exclamation-circle"></i> {% trans 'Invalid ID & Password.' %}</span><br>
-          {% endif %}
+          <div class="form-group mb-3">
+              <label class="mb-2" for="role_id"><i class="fas fa-user-tag me-2"></i>{% trans 'User Role' %}</label>
+              <select name="role" id="role_id" class="form-control" required>
+                  <option value="">-- Select Role --</option>
+                  <option value="student">Student</option>
+                  <option value="lecturer">Lecturer</option>
+                  <option value="admin">Admin</option>
+              </select>
+          </div>
       
-          <button type="submit" class="btn btn-primary" id="login-btn"><i class="fas fa-sign-in-alt"></i><small>{% trans 'SIGN IN' %}</small></button>
+          <button type="submit" class="btn btn-primary" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            <small>{% trans 'SIGN IN' %}</small>
+          </button>
         </form>
         <br>
         <div class="login-bottom">
@@ -34,37 +55,35 @@
       </div>
   </div>
 </div>
+
+<hr>
+<div class="text-center mt-3">
+  <p>{% trans "Don't have an account?" %}</p>
+  <a href="{% url 'signup_choice' %}" class="btn btn-outline-secondary">
+    <i class="fas fa-user-plus"></i> {% trans 'Sign Up' %}
+  </a>
+</div>
 {% endblock content %}
 
 {% block js %}
-
 <script>
   $('#login-form').submit(function (e) {
-    // e.preventDefault();
     $('#login-btn').addClass('disabled')
-    $('#login-btn').html(`<i class="fas fa-sign-in-alt"></i> Signining you in . . .`)
-  })
+    $('#login-btn').html(`<i class="fas fa-sign-in-alt"></i> Signing you in . . .`)
+  });
 
-  $("#username").on("input", function () {
-    username = $(this).val();
-
-    $.ajax({
-      url: "/accounts/ajax/validate-username/",
-      data: {
-        username: username
-      },
-      dataType: 'json',
-      success: function (data) {
-        if (data.is_taken) {
-          console.log(data.is_taken);
-          $('#message-wrapper').html(`<p class="my-2 text-danger"><span class="bg-error p-2"><b>${username}</b> already taken :( try another one </span></p>`)
-        }
-        else {
-          $('#message-wrapper').html(`<p class="my-2 text-success"><span class="bg-correct p-2"><b>${username}</b> is valid </span></p>`)
-        }
-      }
-
-    })
-  })
+  // Auto-dismiss alerts after 5 seconds
+  setTimeout(function() {
+    $('.alert').alert('close');
+  }, 5000);
 </script>
 {% endblock %}
+<form method="post">
+  {% csrf_token %}
+  <input type="text" name="username" placeholder="Username" required>
+  <input type="password" name="password" placeholder="Password" required>
+  <button type="submit">Login</button>
+  {% if error %}
+    <p style="color: rgb(232, 145, 145)">{{ error }}</p>
+  {% endif %}
+</form>

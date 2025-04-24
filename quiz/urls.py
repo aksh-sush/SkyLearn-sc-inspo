@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from core import views as core_views
+from quiz import views as quiz_views
 
 urlpatterns = [
     path("<slug>/quizzes/", views.quiz_list, name="quiz_index"),
@@ -11,6 +13,13 @@ urlpatterns = [
         view=views.QuizMarkingDetail.as_view(),
         name="quiz_marking_detail",
     ),
+   
+    path("<slug>/quizzes/", quiz_views.quiz_list, name="quiz_index"),
+    path("progress/", quiz_views.QuizUserProgressView.as_view(), name="quiz_progress"),
+
+
+     path("<slug>/quizzes/", views.quiz_list, name="quiz_index"),
+    path("progress/", views.QuizUserProgressView.as_view(), name="quiz_progress"),
     path("<int:pk>/<slug>/take/", view=views.QuizTake.as_view(), name="quiz_take"),
     path("<slug>/quiz_add/", views.QuizCreateView.as_view(), name="quiz_create"),
     path("<slug>/<int:pk>/add/", views.QuizUpdateView.as_view(), name="quiz_update"),

@@ -1,0 +1,51 @@
+<form method="post" action="{% url 'signup' %}">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+    {{ form.username }}
+    {{ form.username.errors }}
+
+    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+    {{ form.first_name }}
+    {{ form.first_name.errors }}
+
+    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+    {{ form.last_name }}
+    {{ form.last_name.errors }}
+
+    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+    {{ form.email }}
+    {{ form.email.errors }}
+
+    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+    {{ form.phone }}
+    {{ form.phone.errors }}
+
+    <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+    {{ form.address }}
+    {{ form.address.errors }}
+
+    <label for="{{ form.gender.id_for_label }}">{{ form.gender.label }}</label>
+    {{ form.gender }}
+    {{ form.gender.errors }}
+
+    <label for="{{ form.level.id_for_label }}">{{ form.level.label }}</label>
+    {{ form.level }}
+    {{ form.level.errors }}
+
+    <label for="{{ form.program.id_for_label }}">program</label>
+    {{ form.program }}
+    {{ form.program.errors }}
+
+    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+    {{ form.password1 }}
+    {{ form.password1.errors }}
+
+    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+    {{ form.password2 }}
+    {{ form.password2.errors }}
+
+    <!-- ✅ Submit button -->
+    <button type="submit">Sign Up</button>
+</form>

@@ -3,6 +3,12 @@ from accounts.models import User
 from .models import Program, Course, CourseAllocation, Upload, UploadVideo
 
 
+class SignupForm(forms.ModelForm):
+    program = forms.ModelChoiceField(queryset=Program.objects.all(), empty_label="Select a course")
+
+    class Meta:
+        model = User  # or your custom user model
+        fields = ['username', 'first_name', 'last_name', 'email', 'phone', 'address', 'gender', 'level', 'program', 'password1', 'password2']
 class ProgramForm(forms.ModelForm):
     class Meta:
         model = Program
